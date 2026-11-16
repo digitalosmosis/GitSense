@@ -1,0 +1,128 @@
+/* Sizes, fonts and the default theme colors.
+ * - The Graphite and Daylight values below are what the page shows before
+ *   the script runs; js/themes.js then sets the active theme's colors on <html>.
+ * - With no theme known yet, the page is Graphite, the default theme.
+ * - They must match those themes in js/themes.js (tests/test_themes.py checks).
+ * - Component styles use the semantic variables, never raw hex codes.
+ */
+
+@font-face { font-family: 'Montserrat'; font-weight: 400; font-style: normal; font-display: swap; src: local('Montserrat Regular'), local('Montserrat-Regular'), url('../fonts/Montserrat-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'Montserrat'; font-weight: 500; font-style: normal; font-display: swap; src: local('Montserrat Medium'), local('Montserrat-Medium'), url('../fonts/Montserrat-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; font-style: normal; font-display: swap; src: local('Montserrat SemiBold'), local('Montserrat-SemiBold'), url('../fonts/Montserrat-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'Montserrat'; font-weight: 700; font-style: normal; font-display: swap; src: local('Montserrat Bold'), local('Montserrat-Bold'), url('../fonts/Montserrat-Bold.ttf') format('truetype'); }
+
+:root {
+  /* Gradients follow the active theme's header band colors. */
+  --gradient-brand: linear-gradient(120deg, var(--brand-1) 0%, var(--brand-2) 100%);
+  --gradient-bar: linear-gradient(90deg, var(--brand-1) 0%, var(--brand-2) 100%);
+  --gradient-bar-reverse: linear-gradient(90deg, var(--brand-2) 0%, var(--brand-1) 100%);
+  --font: 'Montserrat', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* sizes */
+  --topbar-h: 46px;
+  --toolbar-h: 52px;
+  --statusbar-h: 26px;
+  --row-h: 28px;
+  --radius: 2px;
+}
+
+/* Graphite: the default theme, dark grey surfaces with blue accents. */
+:root, :root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1E1F22;
+  --panel: #26282C;
+  --panel-strong: #2F3237;
+  --raised: #2B2D31;
+  --line: #3A3D43;
+  --line-soft: #303338;
+  --text: #C9CDD4;
+  --text-strong: #F2F3F5;
+  --muted: #8F95A0;
+  --title: #F2F3F5;
+  --accent: #3F6FCC;
+  --accent-hover: #4C7CD8;
+  --on-accent: #FFFFFF;
+  --accent-2: #7FB2FF;
+  --on-accent-2: #14161A;
+  --brand-1: #3F6FCC;
+  --brand-2: #23272E;
+  --on-brand: #FFFFFF;
+  --on-brand-muted: #D3D9E3;
+  --on-brand-accent: #A9CBFF;
+  --link: #7FB2FF;
+  --hover: #2C2F34;
+  --selected: #353A44;
+  --highlight: #2A3A55;
+  --shadow: 0 2px 6px rgb(0 0 0 / .3);
+  --shadow-pop: 0 10px 32px rgb(0 0 0 / .5);
+  --backdrop: rgb(8 9 12 / .6);
+
+  /* graph lanes */
+  --lane-0: #7FB2FF;
+  --lane-1: #E0A458;
+  --lane-2: #9AD17A;
+  --lane-3: #D98BD0;
+  --lane-4: #6FD0C8;
+  --lane-5: #A0A6B0;
+
+  /* status colors, used for diffs and warnings */
+  --ok: #7BC98F;
+  --ok-bg: #20362A;
+  --ok-bg-strong: #2B4C39;
+  --danger: #F08A8A;
+  --danger-bg: #3A2326;
+  --danger-bg-strong: #57303A;
+  --on-danger: #1E1F22;
+  --warn: #E5B567;
+  --warn-bg: #3A3323;
+}
+
+/* Daylight: the default light theme, white surfaces with blue accents. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #FFFFFF;
+  --panel: #F4F6F8;
+  --panel-strong: #E8ECF0;
+  --raised: #FFFFFF;
+  --line: #D5DBE2;
+  --line-soft: #E7EBEF;
+  --text: #3B4350;
+  --text-strong: #151A22;
+  --muted: #687282;
+  --title: #1F5FBF;
+  --accent: #1F5FBF;
+  --accent-hover: #184E9F;
+  --on-accent: #FFFFFF;
+  --accent-2: #0B7F7A;
+  --on-accent-2: #FFFFFF;
+  --brand-1: #1F5FBF;
+  --brand-2: #152B52;
+  --on-brand: #FFFFFF;
+  --on-brand-muted: #D5E3F7;
+  --on-brand-accent: #8FE3DC;
+  --link: #1F5FBF;
+  --hover: #EEF2F6;
+  --selected: #DCE8F8;
+  --highlight: #DDF3F1;
+  --shadow: 0 2px 6px rgb(0 0 0 / .08);
+  --shadow-pop: 0 8px 28px rgb(21 43 82 / .22);
+  --backdrop: rgb(21 43 82 / .35);
+
+  --lane-0: #1F5FBF;
+  --lane-1: #0B7F7A;
+  --lane-2: #C2410C;
+  --lane-3: #7C3AED;
+  --lane-4: #687282;
+  --lane-5: #B8C4D4;
+
+  --ok: #1F7A4D;
+  --ok-bg: #E2F3E9;
+  --ok-bg-strong: #BFE3CF;
+  --danger: #B42335;
+  --danger-bg: #FBE9EB;
+  --danger-bg-strong: #F4C5CB;
+  --on-danger: #FFFFFF;
+  --warn: #946000;
+  --warn-bg: #FBF0D9;
+}

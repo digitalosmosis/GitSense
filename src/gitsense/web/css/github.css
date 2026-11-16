@@ -1,0 +1,117 @@
+/* GitHub pull requests: sidebar rows, unavailable states and the create dialog. */
+
+/* -- sidebar rows ---------------------------------------------------------- */
+
+.pr-list { display: flex; flex-direction: column; }
+
+.pr-row .pr-number { color: var(--muted); font-weight: 500; }
+.pr-row.current .pr-number { color: inherit; }
+.pr-row.pr-draft .side-label { color: var(--muted); }
+
+.pr-marks { gap: 3px; }
+.pr-mark { display: inline-grid; place-items: center; width: 14px; height: 14px; }
+/* Beats the muted and current-row icon colors from repo.css. */
+.side-row .pr-mark .icon,
+:root[data-theme] .side-row.pr-row .pr-mark .icon { color: inherit; }
+.pr-checks-passing, .pr-review-approved { color: var(--ok); }
+.pr-checks-failing, .pr-review-changes { color: var(--danger); }
+.pr-checks-pending { color: var(--warn); }
+
+/* -- unavailable and empty states ------------------------------------------ */
+
+.pr-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 3px 10px 6px 25px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.pr-note > .icon { margin-top: 2px; }
+.pr-note-text { margin: 0; }
+.pr-note-error .pr-note-text { color: var(--danger); }
+.pr-note-detail {
+  margin: 3px 0 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  word-break: break-word;
+}
+.pr-note-actions { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; }
+
+.pr-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pr-link:hover { text-decoration: underline; }
+.pr-link:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+
+.pr-code {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 0 4px;
+  background: var(--panel-strong);
+  border-radius: var(--radius);
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* -- create dialog --------------------------------------------------------- */
+
+.pr-branches { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pr-branch {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  color: var(--text-strong);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.pr-branch .icon { color: var(--accent); }
+:root[data-theme="dark"] .pr-branch .icon { color: var(--accent-2); }
+.pr-into { flex: none; color: var(--muted); font-size: 12px; }
+.pr-base { flex: 1 1 200px; min-width: 120px; }
+.pr-base .input { font-family: var(--mono); font-size: 12px; }
+
+.pr-push-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+  padding: 7px 10px;
+  background: var(--highlight);
+  border-left: 3px solid var(--accent-2);
+  color: var(--text-strong);
+  font-size: 12px;
+}
+.pr-push-note .icon { color: var(--accent-2); }
+
+.pr-body { min-height: 140px; }
+.pr-draft-check { margin-bottom: 12px; }
+
+.pr-done {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0 10px;
+}
+.pr-done > .icon { color: var(--ok); margin-top: 1px; }
+.pr-done .heading { margin: 0 0 4px; }
+.pr-done .pr-done-url { margin: 0; color: var(--text); word-break: break-all; }

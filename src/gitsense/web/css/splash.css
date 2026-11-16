@@ -1,0 +1,133 @@
+/* Loading splash: the GitSense tile surfs the commit graph while the app starts.
+ * - It is plain HTML and CSS in index.html, so it shows on the very first frame.
+ * - js/splash.js fades it out once the first view is ready.
+ * - Colors come from the active theme.
+ * - A mod may replace the rider and the command lines; the stage and river stay.
+ */
+
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text);
+  transition: opacity .28s ease, visibility .28s;
+}
+#splash.sp-out { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.sp-bar { position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gradient-bar); }
+
+.sp-stage { position: relative; width: 480px; max-width: 92vw; height: 250px; }
+
+/* -- the commit graph "river" ---------------------------------------------- */
+
+.sp-river {
+  position: absolute; left: 0; bottom: 0; width: 100%; height: 92px;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+}
+.sp-flow { animation: sp-flow 4.8s linear infinite; }
+.sp-lane { fill: none; stroke-width: 3; stroke-linecap: round; }
+.sp-node { stroke: var(--bg); stroke-width: 2.5; }
+.sp-l0 { stroke: var(--lane-0); } .sp-l1 { stroke: var(--lane-1); } .sp-l2 { stroke: var(--lane-2); }
+.sp-node.sp-l0 { fill: var(--lane-0); stroke: var(--bg); }
+.sp-node.sp-l1 { fill: var(--lane-1); stroke: var(--bg); }
+.sp-node.sp-l2 { fill: var(--lane-2); stroke: var(--bg); }
+
+/* -- the rider ------------------------------------------------------------ */
+
+.sp-rider { position: absolute; left: 50%; bottom: 64px; margin-left: -80px; overflow: visible; }
+.sp-rider * { transform-box: fill-box; }
+.sp-stop-1 { stop-color: var(--brand-1); }
+.sp-stop-2 { stop-color: var(--brand-2); }
+/* The board is outlined in the background color, so it stands clear of the lane it rides. */
+.sp-board { fill: var(--accent-2); stroke: var(--bg); stroke-width: 4; }
+.sp-fin { fill: var(--accent); }
+.sp-s-top { stroke: var(--on-brand-accent); }
+.sp-s-bottom { stroke: var(--on-brand); }
+.sp-s-node-1 { fill: var(--on-brand-accent); }
+.sp-s-node-2 { fill: var(--on-brand-muted); }
+.sp-s-node-3 { fill: var(--on-brand); }
+
+/* Board and tile rock from side to side and bob, riding the top branch. */
+.sp-ride { transform-origin: 50% 100%; animation: sp-ride 1.6s ease-in-out infinite; }
+/* The tile leans into each turn a moment later, keeping its balance. */
+.sp-tile { transform-origin: 50% 100%; animation: sp-lean 1.6s ease-in-out -.2s infinite; }
+
+/* -- words ----------------------------------------------------------------- */
+
+.sp-name {
+  margin: 22px 0 0;
+  font-family: var(--font);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: .34em;
+  text-indent: .34em;
+  text-transform: uppercase;
+  color: var(--title);
+  /* Held back a moment so the brand font is in place before the name shows. */
+  animation: sp-rise .45s ease-out .18s both;
+}
+
+/* Three commands typed in turn at a shell prompt.
+ * - Each line sets --n to its length in characters, which sets its width and typing steps.
+ */
+.sp-cmd {
+  position: relative;
+  height: 20px;
+  width: 26ch;
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--muted);
+  animation: sp-rise .45s ease-out .3s both;
+}
+.sp-type {
+  --n: 24;
+  position: absolute; left: 0; top: 0;
+  box-sizing: content-box;
+  width: 0;
+  overflow: hidden;
+  white-space: pre;
+  border-right: 7px solid transparent; /* the caret */
+}
+/* While a command waits for its turn it has no width and no caret. */
+.sp-type-1 { animation: sp-type 6.6s steps(var(--n), end) infinite, sp-caret 6.6s step-end infinite; }
+.sp-type-2 { animation: sp-type 6.6s steps(var(--n), end) 2.2s infinite, sp-caret 6.6s step-end 2.2s infinite; }
+.sp-type-3 { animation: sp-type 6.6s steps(var(--n), end) 4.4s infinite, sp-caret 6.6s step-end 4.4s infinite; }
+
+@keyframes sp-flow { to { transform: translateX(-240px); } }
+@keyframes sp-ride {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  25% { transform: translateY(-6px) rotate(0deg); }
+  50% { transform: translateY(0) rotate(4deg); }
+  75% { transform: translateY(-6px) rotate(0deg); }
+}
+@keyframes sp-lean {
+  0%, 100% { transform: rotate(3deg); }
+  50% { transform: rotate(-3deg); }
+}
+@keyframes sp-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Each command types out over the first part of its turn, holds, then clears. */
+@keyframes sp-type {
+  0% { width: 0; }
+  14%, 31% { width: calc(var(--n) * 1ch); }
+  33.3%, 100% { width: 0; }
+}
+@keyframes sp-caret {
+  0%, 4%, 8%, 12%, 20%, 28% { border-right-color: var(--accent-2); }
+  16%, 24%, 32% { border-right-color: transparent; }
+  33.3%, 100% { border-right-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #splash, #splash * { animation: none !important; transition: none !important; }
+  .sp-type-1 { width: calc(var(--n) * 1ch); }
+}

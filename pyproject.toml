@@ -1,0 +1,28 @@
+[project]
+name = "gitsense"
+version = "1.0.0"
+description = "A Git and GitHub client for local repositories"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "digitalosmosis" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "pywebview>=6.0; sys_platform == 'darwin'",
+]
+
+[project.optional-dependencies]
+# Native window on Linux and Windows (macOS gets it by default).
+window = ["pywebview>=6.0"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[project.scripts]
+gitsense = "gitsense:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
