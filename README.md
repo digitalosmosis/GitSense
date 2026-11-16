@@ -16,139 +16,175 @@ It covers the everyday GitKraken workflow (commit graph, staging, branches, stas
 - **Stashes:** save, apply, pop, drop.
 - **GitHub:** open pull requests with check and review status, check a PR out, create a PR.
 - **Themes:** Graphite, Daylight and three more. Duplicate any of them and change every color, or import a theme someone shared.
-- **Mods:** add themes, a loading splash and an app icon from a folder of files. See [Mods](#mods).
-- Opens in its own window, or in a browser with `--browser`.
+- **Mods:** add themes, a loading splash and an app icon that someone else made. See [Mods](#mods).
 
 ## Requirements
 
-- macOS (tested). Linux and Windows are expected to work in the browser but are not tested yet.
-- `git` 2.30 or later
-- [`uv`](https://docs.astral.sh/uv/) (it installs Python 3.14 for you)
-- Optional: the [GitHub CLI](https://cli.github.com) (`gh`), signed in with `gh auth login`, for the GitHub features
+- macOS (tested). Linux and Windows are expected to work but are not tested yet.
+- `git` 2.30 or later.
+- [`uv`](https://docs.astral.sh/uv/). It installs Python 3.14 for you.
+- Optional: the [GitHub CLI](https://cli.github.com) (`gh`), for the GitHub features.
+
+If you don't have uv yet, install it with Homebrew:
+
+```sh
+brew install uv
+```
+
+Or with its installer, on macOS or Linux:
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+On Windows, see the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 
 ## Install
 
 ```sh
-uv tool install git+ssh://git@github.com/digitalosmosis/GitSense.git
+uv tool install git+https://github.com/digitalosmosis/GitSense.git
+```
+
+Then start it:
+
+```sh
 gitsense
 ```
 
-To update later: `uv tool upgrade gitsense`.
-
-On macOS the app opens in a native window. On Linux and Windows it opens in your browser unless you install the window extra:
+If your shell says `command not found: gitsense`, let uv add its tools folder to your PATH, then open a new terminal:
 
 ```sh
-uv tool install "gitsense[window] @ git+ssh://git@github.com/digitalosmosis/GitSense.git"
+uv tool update-shell
 ```
 
-### Install as a macOS app
+### Add GitSense to Applications (macOS)
 
-To open GitSense from Finder, Launchpad or Spotlight, run this in a clone of the repository:
+To open GitSense from Finder, Launchpad or Spotlight:
 
 ```sh
-scripts/install-macos-app.sh            # installs gitsense with uv, then adds GitSense.app
-scripts/install-macos-app.sh --dev      # the app runs this checkout instead
+gitsense --install-app
 ```
 
-- The app goes in `/Applications`, or `~/Applications` if that is not writable. Pass a folder to choose.
-- If `gitsense` is already installed, `gitsense --install-app` does the same. `gitsense --uninstall-app` removes it.
-- Its output goes to `~/Library/Logs/GitSense/gitsense.log`.
+- The app goes in `/Applications`, or in `~/Applications` if that is not writable.
+- To put it somewhere else, pass a folder: `gitsense --install-app ~/Desktop`.
+- The app runs the `gitsense` you installed, so updating GitSense updates the app too.
+- Its log goes to `~/Library/Logs/GitSense/gitsense.log`.
+
+### Native window on Linux and Windows
+
+On macOS GitSense opens in its own window. On Linux and Windows it opens in your web browser, unless you install it with the window extra instead:
+
+```sh
+uv tool install "gitsense[window] @ git+https://github.com/digitalosmosis/GitSense.git"
+```
+
+### GitHub features
+
+The pull request features use the GitHub CLI. Install it, then sign in once:
+
+```sh
+gh auth login
+```
+
+## Update
+
+```sh
+uv tool upgrade gitsense
+```
+
+On macOS, after an update, run `gitsense --install-app` again if the app icon changed.
 
 ## Use
 
 ```sh
-gitsense                    # open the app
-gitsense ~/Repos/MyProject  # add a repository and open it in a tab
-gitsense --browser          # use the web browser instead of a window
-gitsense --help
+gitsense
 ```
 
-Keyboard: Cmd/Ctrl+1 for the repository list, Cmd/Ctrl+2-9 for tabs, Cmd/Ctrl+W to close a tab, Cmd/Ctrl+F to find commits, Cmd/Ctrl+Enter to commit, Esc to close a diff. In the commit box, Tab moves from the summary to the description to the commit button. Drag a tab sideways to reorder the tabs.
+| Command | What it does |
+|---|---|
+| `gitsense` | Open GitSense |
+| `gitsense ~/Repos/MyProject` | Add a repository and open it in a tab |
+| `gitsense --browser` | Open in your web browser instead of a window |
+| `gitsense --version` | Show the installed version |
+| `gitsense --help` | List every option |
+
+### Keyboard
+
+| Keys | What they do |
+|---|---|
+| Cmd/Ctrl+1 | The repository list |
+| Cmd/Ctrl+2 to 9 | Switch to a tab |
+| Cmd/Ctrl+W | Close the tab |
+| Cmd/Ctrl+F | Find commits |
+| Cmd/Ctrl+Enter | Commit |
+| Tab, in the commit box | Summary, then description, then the commit button |
+| Esc | Close a diff |
+
+Drag a tab sideways to reorder the tabs.
+
+### Fetch, Pull and Push
+
+- A running Fetch, Pull or Push button shows a spinner.
+- Right-click a running button to cancel it.
 
 ## Mods
 
-A mod changes how GitSense looks. It is a folder holding a `mod.json` manifest and asset files. Mods hold no code: no JavaScript and no Python.
+A mod changes how GitSense looks: extra themes, a different loading splash, a different app icon. Mods hold no code.
+
+Install one from a folder or a .zip someone gave you:
 
 ```sh
-gitsense --install-mod path/to/mod      # a folder or a .zip of one
+gitsense --install-mod ~/Downloads/my-mod.zip
+```
+
+See what is installed:
+
+```sh
 gitsense --list-mods
-gitsense --uninstall-mod <id>
 ```
 
-- Installed mods live in `~/.config/gitsense/mods/<id>/`.
-- A new mod is switched on. Settings > Mods switches each one on or off, and reloads the window.
-- A mod that cannot be read is skipped with a message on the terminal; GitSense still starts.
+Remove one by its id, as `--list-mods` shows it:
 
-`mod.json`, where every key but `id` is optional:
-
-```json
-{
-  "id": "my-mod",
-  "name": "My mod",
-  "version": "1.0.0",
-  "description": "What it changes.",
-  "themes": [{ "id": "my-dark", "name": "My Dark", "kind": "dark", "colors": { "bg": "#101418", "...": "..." } }],
-  "default_themes": { "light": "my-light", "dark": "my-dark" },
-  "stylesheets": ["style.css"],
-  "splash": "splash.html",
-  "icon": { "svg": "icon.svg", "png": "icon-512.png", "icns": "GitSense.icns" }
-}
+```sh
+gitsense --uninstall-mod my-mod
 ```
 
-| Key | What it does |
-|---|---|
-| `id` | Lowercase letters, digits and dashes. It names the mod's folder. |
-| `themes` | Added to the theme picker. They use the same color names as an exported theme, and cannot be edited, only duplicated. Ids may not clash with built-in themes or start with `custom-`. |
-| `default_themes` | Applied when the mod is installed or switched on. With both, GitSense follows the system between them; with one, it uses that one. When the mod is switched off or removed, settings that pointed at its themes go back to Graphite and Daylight. |
-| `stylesheets` | CSS files added to the page after GitSense's own. |
-| `splash` | An HTML fragment for the loading splash. Text between `<!-- splash:rider -->` and `<!-- /splash:rider -->` replaces the icon riding the graph. Text between `<!-- splash:lines -->` and `<!-- /splash:lines -->` replaces the three commands; give each `<span class="sp-type sp-type-N" style="--n:LENGTH">`. Scripts, event handlers and outside addresses are refused. |
-| `icon` | Replaces the window icon (`svg`, or `png`), the Dock icon and the GitSense.app icon (`icns`, or `png`). Run `gitsense --install-app` again to update GitSense.app. |
+- A new mod is switched on, and its themes are applied.
+- Settings > Mods switches each mod on or off.
+- If a mod changes the app icon, run `gitsense --install-app` again to update GitSense.app.
 
-- When several mods are on, all their themes and stylesheets apply. The first mod by id with a splash or an icon supplies it.
-- Mod files are served only to the GitSense window, only from inside the mod's folder, and only as CSS, images, fonts or JSON.
-- A mod may hold `.css`, `.svg`, `.png`, `.jpg`, `.webp`, font, `.json`, `.html` (the splash), `.icns`, `.md` and `.txt` files, up to 4 MB each and 16 MB in all.
+To make a mod, see [docs/mods.md](docs/mods.md).
 
-## How it works
+## Uninstall
+
+On macOS, remove the app first:
+
+```sh
+gitsense --uninstall-app
+```
+
+Then remove GitSense:
+
+```sh
+uv tool uninstall gitsense
+```
+
+Your settings stay in `~/.config/gitsense/`. Delete that folder too if you want them gone.
+
+## Privacy and security
 
 - GitSense runs the `git` and `gh` command line tools you already have, so your SSH keys, credential helper, commit signing and hooks all apply.
 - It never stores a password or token. GitHub access goes through `gh`.
-- The UI is served by a small local server on `127.0.0.1` only, protected by a per-launch token.
+- The window talks to a small local server on `127.0.0.1` only, protected by a per-launch key.
 - It makes no network requests of its own. No telemetry, no avatars, no update checks.
-- Settings, groups and the repository list live in `~/.config/gitsense/config.json` (mode 0600).
+- Settings, groups and the repository list live in `~/.config/gitsense/config.json`, readable only by you.
 
-## Development
+## Contributing
 
-Python 3.14, managed by `uv`.
-
-```sh
-uv sync
-uv run gitsense --debug
-uv run pytest -q
-uv run --with playwright python tests/e2e/run_e2e.py   # browser test of the main workflows
-```
-
-Both test suites build throwaway repositories in a temp folder and use their own config, so they never touch your real repositories or settings.
-
-Layout:
-
-| Path | What |
-|---|---|
-| `src/gitsense/gitcmd.py` | Runs git and gh without prompts |
-| `src/gitsense/repo.py` | Read side: refs, status, history, diffs |
-| `src/gitsense/actions.py` | Write side: every operation that changes a repository |
-| `src/gitsense/graph.py`, `patch.py` | Graph lane layout; diff parsing and partial patches |
-| `src/gitsense/github.py` | GitHub features through `gh` |
-| `src/gitsense/server.py`, `cli.py` | Local HTTP API and the launcher |
-| `src/gitsense/mods.py` | Mods: checking, installing and serving them |
-| `src/gitsense/web/` | The UI: plain HTML, CSS and ES modules, no build step |
-| `tools/gen_icons.py` | Regenerates `web/js/icons.js` from Lucide |
-| `tools/build_icon.py` | Builds `assets/GitSense.icns` from `assets/icon.svg` (needs `rsvg-convert`) |
-
-The frontend has no build step. Edit a file under `src/gitsense/web/` and reload the window.
-
-Config and secrets go in `~/.config/gitsense/` (mode 0600), never in this repo. The repo must stay private.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for running GitSense from a clone, the tests and the code layout.
 
 ## Licenses
 
-- Montserrat is bundled under the SIL Open Font License (`web/fonts/OFL.txt`).
-- Icons are from Lucide under the ISC license (`web/LICENSE-lucide.txt`).
+- GitSense is under the MIT License. See [LICENSE](LICENSE).
+- Montserrat is bundled under the SIL Open Font License (`src/gitsense/web/fonts/OFL.txt`).
+- Icons are from Lucide under the ISC license (`src/gitsense/web/LICENSE-lucide.txt`).
