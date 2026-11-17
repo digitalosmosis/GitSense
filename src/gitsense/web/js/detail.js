@@ -9,6 +9,8 @@ import { toast } from './ui.js';
 import * as ops from './ops.js';
 
 const SUMMARY_SOFT_LIMIT = 72;
+/** Files each of the unstaged and staged lists needs before the two split the panel evenly. */
+const EVEN_SPLIT_MIN = 3;
 
 const OPERATION_TEXT = {
   merge: 'Merge in progress',
@@ -420,10 +422,17 @@ export class Detail {
       staged: h('span', { style: { display: 'contents' } }),
     };
     this.renderSectionActions();
+    const sections = [
+      this.fileSection('Unstaged files', st.unstaged, { kind: 'unstaged' }, this.sectionActions.unstaged),
+      this.fileSection('Staged files', st.staged, { kind: 'staged' }, this.sectionActions.staged)];
+    // Both lists in use: split the panel evenly.
+    // - Otherwise each list is sized to its files, so a short list collapses.
+    if (st.unstaged.length >= EVEN_SPLIT_MIN && st.staged.length >= EVEN_SPLIT_MIN) {
+      for (const el of sections) el.classList.add('even');
+    }
     append(clear(this.wipLists), [
       st.conflicted.length ? this.fileSection('Conflicted', st.conflicted, { kind: 'conflicted' }, null, false) : null,
-      this.fileSection('Unstaged files', st.unstaged, { kind: 'unstaged' }, this.sectionActions.unstaged),
-      this.fileSection('Staged files', st.staged, { kind: 'staged' }, this.sectionActions.staged)]);
+      ...sections]);
     if (this.mode !== 'wip' || !this.wipBody.isConnected) {
       append(clear(this.el), [this.wipHead, this.wipBanner, this.wipBody]);
     }

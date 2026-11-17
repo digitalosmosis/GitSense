@@ -281,6 +281,8 @@
 .file-section { display: flex; flex-direction: column; min-height: 0; }
 /* Lists take the room their files need and shrink together when space runs out. */
 .file-section.flex { flex: 0 1 auto; min-height: 96px; }
+/* Unstaged and staged lists that both hold several files get half the room each. */
+.file-section.flex.even { flex: 1 1 0; }
 .detail-body > .commit-form { margin-top: auto; }
 .detail-body > .file-section.flex:last-child { flex: 1 1 auto; }
 .file-section-head {
