@@ -236,6 +236,28 @@ try:
                     (repo / name).unlink()
                 expect(unstaged_sec.locator(".file-row", has_text="m1.txt")).to_have_count(0, timeout=9000)
 
+        @step("unstaged and staged lists split evenly once both hold 3 files")
+        def _():
+            names = [f"e{i}.txt" for i in range(8)]
+            sections = detail.locator(".file-section.even")
+            try:
+                for name in names:
+                    (repo / name).write_text(name + "\n")
+                git(repo, "add", *names[:3])
+                expect(staged_sec.locator(".file-row")).to_have_count(3, timeout=9000)
+                expect(sections).to_have_count(2)
+                heights = [round(b["height"]) for b in (sections.nth(i).bounding_box() for i in range(2))]
+                assert abs(heights[0] - heights[1]) <= 1, heights
+                # Dropping to 2 staged files sizes each list to its files again.
+                git(repo, "reset", "-q", "--", names[0])
+                expect(staged_sec.locator(".file-row")).to_have_count(2, timeout=9000)
+                expect(sections).to_have_count(0)
+            finally:
+                git(repo, "reset", "-q")
+                for name in names:
+                    (repo / name).unlink()
+                expect(detail.locator(".file-row", has_text="e0.txt")).to_have_count(0, timeout=9000)
+
         @step("stash and pop from the toolbar")
         def _():
             page.locator(".tb-btn", has_text="Stash").click()

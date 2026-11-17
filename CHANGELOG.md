@@ -20,6 +20,7 @@ First version.
 - Working directory
   - Stage, unstage and discard by file, hunk or line
   - Cmd-click or Shift-click selects several staged or unstaged files to act on together
+  - The unstaged and staged lists split the panel evenly once both hold 3 or more files
   - Commit and amend
   - Tab goes from summary to description to the commit button, so Space commits
 - Diff viewer
