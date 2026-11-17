@@ -582,6 +582,19 @@ export function fileMenu(view, file, ctx, anchor) {
   ]);
 }
 
+/** Context menu for several picked staged or unstaged files. */
+export function filesMenu(view, files, ctx, anchor) {
+  const count = plural(files.length, 'file');
+  showMenu(anchor, [
+    { heading: `${count} selected` },
+    ctx.kind === 'unstaged' ? { label: `Stage ${count}`, icon: 'plus', onClick: () => view.run('stage', { paths: files.map((f) => f.path) }, { quiet: true }) } : null,
+    ctx.kind === 'staged' ? { label: `Unstage ${count}`, icon: 'minus', onClick: () => view.run('unstage', { paths: files.flatMap(stagePaths) }, { quiet: true }) } : null,
+    ctx.kind === 'unstaged' ? { label: `Discard changes to ${count}…`, icon: 'undo-2', danger: true, onClick: () => discardFiles(view, files) } : null,
+    { sep: true },
+    { label: 'Copy paths', icon: 'copy', onClick: () => copy(files.map((f) => f.path).join('\n'), 'Paths') },
+  ]);
+}
+
 /** Both sides of a staged rename have to be unstaged together. */
 export function stagePaths(file) {
   return file.orig_path ? [file.orig_path, file.path] : [file.path];

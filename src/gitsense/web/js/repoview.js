@@ -557,6 +557,8 @@ export class RepoView {
     if (ev.key === 'Escape' && this.diffTarget && !document.querySelector('.menu')) {
       ev.preventDefault();
       this.closeDiff();
+    } else if (ev.key === 'Escape' && !document.querySelector('.menu, .modal') && this.detail.clearMulti()) {
+      ev.preventDefault();
     } else if (mod && ev.key === 'Enter') {
       ev.preventDefault();
       if (this.selected === 'WIP') this.detail.commit();
