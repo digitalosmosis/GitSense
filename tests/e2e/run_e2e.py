@@ -186,6 +186,56 @@ try:
             expect(detail.locator(".file-row", has_text="notes.txt")).to_have_count(0)
             assert not (repo / "notes.txt").exists()
 
+        @step("Cmd-click and Shift-click select several files to stage and unstage")
+        def _():
+            try:
+                unstaged_sec = detail.locator(".file-section").filter(has=page.locator(".eyebrow", has_text=re.compile(r"^Unstaged files")))
+                for name in ("m1.txt", "m2.txt", "m3.txt", "m4.txt"):
+                    (repo / name).write_text(name + "\n")
+                expect(unstaged_sec.locator(".file-row", has_text="m4.txt")).to_have_count(1, timeout=9000)
+                row = lambda name: unstaged_sec.locator(".file-row", has_text=name)
+                selected = unstaged_sec.locator(".file-row.selected")
+                # Plain click opens one diff; Cmd-click adds a second file and closes the diff.
+                row("m1.txt").click()
+                expect(page.locator(".diff-head")).to_be_visible()
+                row("m3.txt").click(modifiers=["Meta"])
+                expect(selected).to_have_count(2)
+                expect(page.locator(".diff-head")).to_have_count(0)
+                expect(unstaged_sec.get_by_role("button", name="Stage 2")).to_be_visible()
+                # Cmd-click on a picked file takes it out; one file left opens its diff.
+                row("m3.txt").click(modifiers=["Meta"])
+                expect(selected).to_have_count(1)
+                expect(page.locator(".diff-head")).to_be_visible()
+                # Shift-click selects the range from the last click.
+                row("m4.txt").click(modifiers=["Shift"])
+                expect(selected).to_have_count(2)
+                expect(row("m3.txt")).to_have_class(re.compile(r"\bselected\b"))
+                row("m1.txt").click()
+                row("m4.txt").click(modifiers=["Shift"])
+                expect(selected).to_have_count(4)
+                expect(row("app.py")).not_to_have_class(re.compile(r"\bselected\b"))
+                # Escape clears the selection.
+                page.keyboard.press("Escape")
+                expect(selected).to_have_count(0)
+                row("m2.txt").click()
+                row("m4.txt").click(modifiers=["Shift"])
+                expect(selected).to_have_count(3)
+                unstaged_sec.get_by_role("button", name="Stage 3").click()
+                expect(staged_sec.locator(".file-row")).to_have_count(3)
+                assert sorted(git(repo, "diff", "--cached", "--name-only").split()) == ["m2.txt", "m3.txt", "m4.txt"]
+                # Right-click on the picked files offers to unstage all of them.
+                staged_sec.locator(".file-row", has_text="m2.txt").click()
+                staged_sec.locator(".file-row", has_text="m3.txt").click(modifiers=["Meta"])
+                staged_sec.locator(".file-row", has_text="m3.txt").click(button="right")
+                page.locator(".menu").get_by_text("Unstage 2 files").click()
+                expect(staged_sec.locator(".file-row")).to_have_count(1)
+                assert git(repo, "diff", "--cached", "--name-only") == "m4.txt"
+            finally:
+                git(repo, "reset", "-q")
+                for name in ("m1.txt", "m2.txt", "m3.txt", "m4.txt"):
+                    (repo / name).unlink()
+                expect(unstaged_sec.locator(".file-row", has_text="m1.txt")).to_have_count(0, timeout=9000)
+
         @step("stash and pop from the toolbar")
         def _():
             page.locator(".tb-btn", has_text="Stash").click()

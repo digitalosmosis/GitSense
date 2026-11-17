@@ -118,7 +118,10 @@ gitsense
 | Cmd/Ctrl+F | Find commits |
 | Cmd/Ctrl+Enter | Commit |
 | Tab, in the commit box | Summary, then description, then the commit button |
-| Esc | Close a diff |
+| Esc | Close a diff, or clear a file selection |
+| Cmd/Ctrl+click a staged or unstaged file | Add it to the selection, or take it out |
+| Shift+click a staged or unstaged file | Select the files from the last click to this one |
+| Space, on a file | Stage or unstage it, or every selected file |
 
 Drag a tab sideways to reorder the tabs.
 

@@ -19,6 +19,7 @@ First version.
   - Selecting a commit highlights its ancestors and descendants and fades the rest
 - Working directory
   - Stage, unstage and discard by file, hunk or line
+  - Cmd-click or Shift-click selects several staged or unstaged files to act on together
   - Commit and amend
   - Tab goes from summary to description to the commit button, so Space commits
 - Diff viewer

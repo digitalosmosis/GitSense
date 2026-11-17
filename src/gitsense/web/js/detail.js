@@ -28,6 +28,11 @@ export class Detail {
     this.cache = new Map(); // sha -> commit detail
     this.token = 0;
     this.committing = false;
+    // Several staged or unstaged files picked with Cmd-click or Shift-click.
+    // - Only one list at a time
+    // - Only while two or more are picked; one file is just the open diff
+    this.multi = null; // { kind, paths: Set } or null
+    this.anchor = null; // { kind, path } of the last plain or Cmd-click, where a Shift-click range starts
     this.buildCommitForm();
     // The working directory panel is built once and only its parts are refilled,
     // so the commit message fields never leave the page while you type.
@@ -200,7 +205,7 @@ export class Detail {
   fileRow(file, ctx) {
     const view = this.view;
     const open = view.diffTarget;
-    const selected = open && fileKey(open.file, open.ctx) === fileKey(file, ctx);
+    const selected = this.multi ? this.isPicked(file, ctx) : open && fileKey(open.file, open.ctx) === fileKey(file, ctx);
     const actions = [];
     if (ctx.kind === 'unstaged') {
       actions.push(iconButton('undo-2', 'Discard changes', () => ops.discardFiles(view, [file]), { size: 13 }));
@@ -218,7 +223,7 @@ export class Detail {
     const title = file.orig_path ? `${file.orig_path} → ${file.path}` : file.path;
     const row = h('div', {
       class: `file-row ${selected ? 'selected' : ''}`, tabindex: '0', title,
-      onclick: () => view.openDiff(file, ctx),
+      onclick: (ev) => this.clickFile(ev, file, ctx),
       onkeydown: (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); view.openDiff(file, ctx); }
         else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
@@ -228,11 +233,17 @@ export class Detail {
           if (next) { next.focus(); next.click(); }
         } else if (ev.key === ' ' && ctx.kind !== 'commit') {
           ev.preventDefault();
-          if (ctx.kind === 'unstaged') view.run('stage', { paths: [file.path] }, { quiet: true });
-          else if (ctx.kind === 'staged') view.run('unstage', { paths: ops.stagePaths(file) }, { quiet: true });
+          const files = this.isPicked(file, ctx) ? this.pickedFiles() : [file];
+          if (ctx.kind === 'unstaged') view.run('stage', { paths: files.map((f) => f.path) }, { quiet: true });
+          else if (ctx.kind === 'staged') view.run('unstage', { paths: files.flatMap(ops.stagePaths) }, { quiet: true });
         }
       },
-      oncontextmenu: (ev) => { ev.preventDefault(); ops.fileMenu(view, file, ctx, { x: ev.clientX, y: ev.clientY }); },
+      oncontextmenu: (ev) => {
+        ev.preventDefault();
+        const anchor = { x: ev.clientX, y: ev.clientY };
+        if (this.isPicked(file, ctx)) ops.filesMenu(view, this.pickedFiles(), ctx, anchor);
+        else ops.fileMenu(view, file, ctx, anchor);
+      },
     },
     statusLetter(ctx.kind === 'conflicted' ? 'U' : file.status),
     h('span', { class: 'file-name' },
@@ -242,14 +253,117 @@ export class Detail {
     stats,
     actions.length ? h('span', { class: 'file-actions' }, actions) : null);
     row.fileKey = fileKey(file, ctx);
+    row.file = file;
+    row.ctx = ctx;
     return row;
   }
 
-  /** Mark the row whose diff is open, without rebuilding the lists. */
+  /** Mark the picked rows, or the row whose diff is open, without rebuilding the lists. */
   highlightFile() {
     const open = this.view.diffTarget;
+    // An open diff means one file is selected, so a multi-file pick has ended.
+    if (open && this.multi) this.setMulti(null);
     const key = open ? fileKey(open.file, open.ctx) : null;
-    for (const row of this.el.querySelectorAll('.file-row')) row.classList.toggle('selected', row.fileKey === key);
+    for (const row of this.el.querySelectorAll('.file-row')) {
+      row.classList.toggle('selected', this.multi ? this.isPicked(row.file, row.ctx) : row.fileKey === key);
+    }
+  }
+
+  // -- multi-file selection -------------------------------------------------------
+
+  isPicked(file, ctx) {
+    return Boolean(this.multi && this.multi.kind === ctx.kind && this.multi.paths.has(file.path));
+  }
+
+  /** The picked files, in list order. */
+  pickedFiles() {
+    if (!this.multi) return [];
+    return this.view.data.status[this.multi.kind].filter((f) => this.multi.paths.has(f.path));
+  }
+
+  setMulti(multi) {
+    this.multi = multi;
+    this.renderSectionActions();
+  }
+
+  /**
+   * A click on a file row.
+   * - Plain click opens the file's diff
+   * - Cmd-click adds the file to the selection, or takes it out if it is already in
+   * - Shift-click selects every file from the last click to this one
+   * - Cmd and Shift work in the staged and unstaged lists, one list at a time
+   */
+  clickFile(ev, file, ctx) {
+    const view = this.view;
+    const kind = ctx.kind;
+    const toggle = ev.metaKey || ev.ctrlKey;
+    if ((kind !== 'staged' && kind !== 'unstaged') || (!toggle && !ev.shiftKey)) {
+      this.anchor = { kind, path: file.path };
+      if (this.multi) this.setMulti(null);
+      view.openDiff(file, ctx);
+      return;
+    }
+    const list = view.data.status[kind];
+    const from = this.anchor && this.anchor.kind === kind ? list.findIndex((f) => f.path === this.anchor.path) : -1;
+    let paths;
+    if (ev.shiftKey && from >= 0) {
+      const to = list.findIndex((f) => f.path === file.path);
+      paths = new Set(list.slice(Math.min(from, to), Math.max(from, to) + 1).map((f) => f.path));
+    } else if (toggle) {
+      // Start from what is selected in this list now: the picked files, or the file whose diff is open.
+      const open = view.diffTarget;
+      if (this.multi && this.multi.kind === kind) paths = new Set(this.multi.paths);
+      else if (open && open.ctx.kind === kind) paths = new Set([open.file.path]);
+      else paths = new Set();
+      if (paths.has(file.path)) paths.delete(file.path);
+      else paths.add(file.path);
+      this.anchor = { kind, path: file.path };
+    } else {
+      // Shift-click with no earlier click in this list.
+      paths = new Set([file.path]);
+      this.anchor = { kind, path: file.path };
+    }
+    ev.currentTarget.focus({ preventScroll: true });
+    if (paths.size >= 2) {
+      this.setMulti({ kind, paths });
+      if (view.diffTarget) view.closeDiff();
+      else this.highlightFile();
+    } else {
+      if (this.multi) this.setMulti(null);
+      const only = list.find((f) => paths.has(f.path));
+      if (only) view.openDiff(only, { kind });
+      else { view.closeDiff(); this.highlightFile(); }
+    }
+  }
+
+  /** Clear a multi-file selection. Returns false when there was none. */
+  clearMulti() {
+    if (!this.multi) return false;
+    this.setMulti(null);
+    this.highlightFile();
+    return true;
+  }
+
+  /** The buttons in the unstaged and staged list headings, which act on the picked files when there are any. */
+  renderSectionActions() {
+    const view = this.view;
+    const st = view.data && view.data.status;
+    if (!st || !this.sectionActions) return;
+    const count = this.pickedFiles().length;
+    const multi = this.multi ? this.multi.kind : null;
+    const total = st.staged.length + st.unstaged.length + st.conflicted.length;
+    append(clear(this.sectionActions.unstaged), multi === 'unstaged' ? [
+      button(`Discard ${count}`, () => ops.discardFiles(view, this.pickedFiles()), { class: 'sm ghost', title: `Discard the changes to ${plural(count, 'selected file')}` }),
+      button(`Stage ${count}`, () => view.run('stage', { paths: this.pickedFiles().map((f) => f.path) }, { quiet: true }), { class: 'sm', title: `Stage ${plural(count, 'selected file')}` }),
+    ] : [
+      button('Discard all', () => ops.discardAll(view), { class: 'sm ghost', disabled: !total }),
+      button('Stage all', () => view.run('stage_all', {}, { quiet: true }), { class: 'sm', disabled: !st.unstaged.length }),
+    ]);
+    append(clear(this.sectionActions.staged), multi === 'staged' ? [
+      button(`Unstage ${count}`, () => view.run('unstage', { paths: this.pickedFiles().flatMap(ops.stagePaths) }, { quiet: true }), { class: 'sm', title: `Unstage ${plural(count, 'selected file')}` }),
+    ] : [
+      button('Unstage all', () => view.run('unstage_all', {}, { quiet: true }), { class: 'sm', disabled: !st.staged.length }),
+    ]);
   }
 
   fileSection(label, files, ctx, actions, flex = true) {
@@ -295,15 +409,21 @@ export class Detail {
       h('div', { class: 'detail-sub' }, icon('git-branch', 12), where,
         st.truncated ? h('span', { title: 'Only the first 5000 changed files are listed' }, '(list truncated)') : null)]);
     append(clear(this.wipBanner), [this.operationBanner()]);
+    // Picked files that left their list (staged, discarded, committed) drop out of the selection.
+    if (this.multi) {
+      const here = new Set(st[this.multi.kind].map((f) => f.path));
+      const paths = new Set([...this.multi.paths].filter((p) => here.has(p)));
+      this.multi = paths.size >= 2 ? { kind: this.multi.kind, paths } : null;
+    }
+    this.sectionActions = {
+      unstaged: h('span', { style: { display: 'contents' } }),
+      staged: h('span', { style: { display: 'contents' } }),
+    };
+    this.renderSectionActions();
     append(clear(this.wipLists), [
       st.conflicted.length ? this.fileSection('Conflicted', st.conflicted, { kind: 'conflicted' }, null, false) : null,
-      this.fileSection('Unstaged files', st.unstaged, { kind: 'unstaged' }, [
-        button('Discard all', () => ops.discardAll(view), { class: 'sm ghost', disabled: !total }),
-        button('Stage all', () => view.run('stage_all', {}, { quiet: true }), { class: 'sm', disabled: !st.unstaged.length }),
-      ]),
-      this.fileSection('Staged files', st.staged, { kind: 'staged' }, [
-        button('Unstage all', () => view.run('unstage_all', {}, { quiet: true }), { class: 'sm', disabled: !st.staged.length }),
-      ])]);
+      this.fileSection('Unstaged files', st.unstaged, { kind: 'unstaged' }, this.sectionActions.unstaged),
+      this.fileSection('Staged files', st.staged, { kind: 'staged' }, this.sectionActions.staged)]);
     if (this.mode !== 'wip' || !this.wipBody.isConnected) {
       append(clear(this.el), [this.wipHead, this.wipBanner, this.wipBody]);
     }
@@ -332,6 +452,7 @@ export class Detail {
 
   async renderCommit(sha) {
     const view = this.view;
+    this.multi = null;
     const token = ++this.token;
     const cached = this.cache.get(sha);
     if (!cached && this.mode !== `commit:${sha}`) {
